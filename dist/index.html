@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cimiento es una propuesta de plataforma para acercar proyectos inmobiliarios seleccionados a una nueva generación de inversores.">
+  <meta name="theme-color" content="#08171c">
+  <title>Cimiento — Inversión inmobiliaria accesible</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2308171c'/%3E%3Cpath d='M17 44V25l15-9 15 9v19H37V32H27v12H17Z' fill='%23d5ff5f'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --ink: #08171c;
+      --ink-soft: #153039;
+      --paper: #f6f5ef;
+      --white: #ffffff;
+      --mist: #dfe8e5;
+      --line: rgba(8, 23, 28, .14);
+      --acid: #d5ff5f;
+      --acid-dark: #9fc630;
+      --amber: #f0a84b;
+      --muted: #52656a;
+      --shadow: 0 24px 70px rgba(8, 23, 28, .14);
+      --radius: 1.5rem;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Aptos", "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      text-rendering: optimizeLegibility;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
+
+    .wrap { width: min(calc(100% - 2.5rem), var(--max)); margin-inline: auto; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      margin: 0 0 1rem;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 1.8rem; height: 2px; background: currentColor; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 500;
+      letter-spacing: -.045em;
+      line-height: .98;
+    }
+    h1 { margin-bottom: 1.5rem; font-size: clamp(3.55rem, 7.2vw, 7.2rem); }
+    h2 { margin-bottom: 1.25rem; font-size: clamp(2.6rem, 5vw, 4.8rem); }
+    h3 { margin-bottom: .7rem; font-size: 1.12rem; line-height: 1.3; }
+    p { color: var(--muted); }
+    .lead { max-width: 680px; font-size: clamp(1.08rem, 2vw, 1.3rem); line-height: 1.55; }
+
+    .site-header {
+      position: absolute;
+      z-index: 20;
+      inset: 0 0 auto;
+      padding: 1.2rem 0;
+      color: var(--white);
+    }
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+    .brand { display: inline-flex; align-items: center; gap: .75rem; color: inherit; text-decoration: none; font-weight: 800; letter-spacing: -.02em; }
+    .mark {
+      display: grid;
+      width: 2.35rem;
+      aspect-ratio: 1;
+      place-items: center;
+      border-radius: .7rem;
+      background: var(--acid);
+      color: var(--ink);
+      font-family: Georgia, serif;
+      font-size: 1.4rem;
+    }
+    .nav-links { display: flex; align-items: center; gap: 1.6rem; }
+    .nav-links a { color: rgba(255,255,255,.78); text-decoration: none; font-size: .92rem; font-weight: 650; }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links .nav-cta { padding: .65rem 1rem; border: 1px solid rgba(255,255,255,.42); border-radius: 99px; color: var(--white); }
+
+    .hero {
+      position: relative;
+      display: grid;
+      min-height: 780px;
+      align-items: end;
+      overflow: hidden;
+      padding: 9.5rem 0 3.25rem;
+      background: var(--ink);
+      color: var(--white);
+      isolation: isolate;
+    }
+    .hero::before {
+      position: absolute;
+      z-index: -2;
+      inset: 0;
+      content: "";
+      background:
+        linear-gradient(90deg, rgba(8,23,28,.97) 0%, rgba(8,23,28,.86) 38%, rgba(8,23,28,.3) 70%, rgba(8,23,28,.1) 100%),
+        url("./assets/cimiento-hero.png") center / cover no-repeat,
+        linear-gradient(135deg, #173640, #08171c 60%);
+    }
+    .hero::after {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      content: "";
+      opacity: .17;
+      background-image:
+        linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(90deg, #000, transparent 80%);
+    }
+    .hero-grid { display: grid; grid-template-columns: 1.25fr .75fr; align-items: end; gap: 4rem; }
+    .hero-copy { max-width: 790px; }
+    .hero .eyebrow { color: var(--acid); }
+    .hero .lead { color: rgba(255,255,255,.75); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+    .button {
+      display: inline-flex;
+      min-height: 3.2rem;
+      align-items: center;
+      justify-content: center;
+      gap: .7rem;
+      padding: .75rem 1.2rem;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+    }
+    .button-primary { background: var(--acid); color: var(--ink); }
+    .button-primary:hover { background: #e2ff8f; }
+    .button-secondary { border: 1px solid rgba(255,255,255,.35); color: var(--white); }
+    .button-secondary:hover { background: rgba(255,255,255,.08); }
+    .arrow { font-size: 1.3rem; line-height: 1; }
+
+    .hero-panel {
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: var(--radius);
+      background: rgba(8,23,28,.68);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .panel-top { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 1.1rem; border-bottom: 1px solid rgba(255,255,255,.14); font-size: .78rem; }
+    .status { display: inline-flex; align-items: center; gap: .45rem; color: rgba(255,255,255,.72); }
+    .status-dot { width: .5rem; aspect-ratio: 1; border-radius: 50%; background: var(--acid); box-shadow: 0 0 0 5px rgba(213,255,95,.11); }
+    .panel-metric { padding: 1.5rem 1.1rem; }
+    .metric-label { color: rgba(255,255,255,.56); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
+    .metric-value { margin: .3rem 0 .2rem; font-family: Georgia, serif; font-size: 3.2rem; line-height: 1; }
+    .metric-note { color: rgba(255,255,255,.63); font-size: .9rem; }
+    .progress { height: .5rem; margin-top: 1.2rem; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.12); }
+    .progress > span { display: block; width: 68%; height: 100%; border-radius: inherit; background: var(--acid); }
+    .panel-grid { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid rgba(255,255,255,.14); }
+    .panel-cell { padding: 1rem 1.1rem; }
+    .panel-cell + .panel-cell { border-left: 1px solid rgba(255,255,255,.14); }
+    .panel-cell b { display: block; margin-top: .2rem; font-size: 1.15rem; }
+
+    section { padding: 7.5rem 0; }
+    .section-head { display: grid; grid-template-columns: .8fr 1.2fr; gap: 4rem; align-items: start; margin-bottom: 3.5rem; }
+    .section-head h2 { max-width: 700px; }
+    .section-intro { max-width: 560px; padding-top: .5rem; }
+
+    .thesis { background: var(--acid); }
+    .thesis-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 5rem; align-items: center; }
+    .thesis h2 { max-width: 760px; }
+    .thesis p { color: rgba(8,23,28,.72); }
+    .manifesto { display: grid; gap: 1rem; }
+    .manifesto-row { display: grid; grid-template-columns: 3rem 1fr; gap: 1rem; padding: 1.1rem 0; border-top: 1px solid rgba(8,23,28,.25); }
+    .manifesto-row:last-child { border-bottom: 1px solid rgba(8,23,28,.25); }
+    .manifesto-row span { font-family: Georgia, serif; font-size: 1.3rem; }
+    .manifesto-row p { margin: 0; font-weight: 700; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .card { min-height: 270px; padding: 1.6rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); }
+    .card-kicker { display: flex; width: 2.7rem; height: 2.7rem; align-items: center; justify-content: center; margin-bottom: 3.5rem; border-radius: .8rem; background: var(--ink); color: var(--acid); font-family: Georgia, serif; font-size: 1.25rem; }
+    .card p { margin-bottom: 0; }
+
+    .model { background: var(--ink); color: var(--white); }
+    .model p { color: rgba(255,255,255,.63); }
+    .model .eyebrow { color: var(--acid); }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: stretch;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .flow-step { position: relative; min-height: 240px; padding: 1.25rem; border-right: 1px solid rgba(255,255,255,.15); }
+    .flow-step:last-child { border-right: 0; }
+    .flow-step::after { position: absolute; top: 1.2rem; right: 1rem; content: "→"; color: var(--acid); font-size: 1.2rem; }
+    .flow-step:last-child::after { content: "✓"; }
+    .flow-number { display: block; margin-bottom: 4.5rem; color: rgba(255,255,255,.43); font-size: .78rem; letter-spacing: .09em; }
+    .flow-step h3 { max-width: 150px; }
+    .flow-step p { margin: 0; font-size: .9rem; }
+
+    .logic-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .logic-card { display: grid; grid-template-columns: auto 1fr; gap: 1.1rem; padding: 1.5rem; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(255,255,255,.55); }
+    .logic-icon { display: grid; width: 3.2rem; aspect-ratio: 1; place-items: center; border-radius: 50%; background: var(--acid); font-family: Georgia, serif; font-weight: 700; }
+    .logic-card p { margin: 0; }
+
+    .numbers { padding-top: 0; }
+    .numbers-shell { display: grid; grid-template-columns: .75fr 1.25fr; overflow: hidden; border-radius: 2rem; background: var(--amber); }
+    .numbers-copy { padding: 3.5rem; }
+    .numbers-copy p { color: rgba(8,23,28,.7); }
+    .revenue-list { display: grid; background: var(--ink); color: var(--white); }
+    .revenue-row { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; padding: 1.35rem 1.6rem; border-bottom: 1px solid rgba(255,255,255,.13); }
+    .revenue-row:last-child { border-bottom: 0; }
+    .revenue-row span { color: rgba(255,255,255,.63); }
+    .revenue-row b { font-family: Georgia, serif; font-size: 1.35rem; font-weight: 500; }
+
+    .roadmap { background: #dfe8e5; }
+    .timeline { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .phase { position: relative; padding: 1.7rem; border-top: 3px solid var(--ink); background: rgba(255,255,255,.48); }
+    .phase-label { display: block; margin-bottom: 3.8rem; font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .phase ul { margin: 1rem 0 0; padding-left: 1.15rem; color: var(--muted); }
+    .phase li + li { margin-top: .45rem; }
+
+    .closing { padding: 8.5rem 0; background: var(--paper); }
+    .closing-box { position: relative; overflow: hidden; padding: clamp(2rem, 6vw, 5rem); border-radius: 2.3rem; background: var(--ink); color: var(--white); }
+    .closing-box::after { position: absolute; right: -4rem; bottom: -8rem; width: 24rem; aspect-ratio: 1; border: 3.8rem solid var(--acid); border-radius: 50%; content: ""; opacity: .9; }
+    .closing-box h2 { max-width: 750px; }
+    .closing-box p { max-width: 620px; color: rgba(255,255,255,.68); }
+    .closing-box .button { position: relative; z-index: 1; margin-top: 1rem; }
+
+    footer { padding: 2rem 0; border-top: 1px solid var(--line); }
+    .footer-grid { display: flex; justify-content: space-between; gap: 2rem; align-items: center; }
+    footer p { max-width: 760px; margin: 0; font-size: .82rem; }
+    .footer-brand { font-weight: 850; }
+
+    @media (max-width: 980px) {
+      .hero { min-height: auto; }
+      .hero-grid, .section-head, .thesis-grid, .numbers-shell { grid-template-columns: 1fr; }
+      .hero-panel { max-width: 480px; margin-top: 1rem; }
+      .section-head, .thesis-grid { gap: 2rem; }
+      .flow { grid-template-columns: repeat(2, 1fr); }
+      .flow-step { border-bottom: 1px solid rgba(255,255,255,.15); }
+      .flow-step:nth-child(2n) { border-right: 0; }
+      .flow-step:last-child { grid-column: 1 / -1; min-height: 190px; }
+      .cards, .timeline { grid-template-columns: 1fr; }
+      .card { min-height: auto; }
+      .card-kicker, .phase-label { margin-bottom: 2rem; }
+    }
+
+    @media (max-width: 680px) {
+      .wrap { width: min(calc(100% - 1.5rem), var(--max)); }
+      .site-header { position: absolute; }
+      .nav { align-items: flex-start; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      .hero { padding-top: 8rem; }
+      .hero::before { background: linear-gradient(180deg, rgba(8,23,28,.72), rgba(8,23,28,.98) 60%), url("./assets/cimiento-hero.png") 61% center / cover no-repeat, var(--ink); }
+      h1 { font-size: clamp(3.3rem, 17vw, 5rem); }
+      section { padding: 5.5rem 0; }
+      .hero-grid { gap: 2.5rem; }
+      .cards, .logic-grid, .flow { grid-template-columns: 1fr; }
+      .flow-step, .flow-step:nth-child(2n) { min-height: 195px; border-right: 0; }
+      .flow-step:last-child { grid-column: auto; }
+      .flow-number { margin-bottom: 2.8rem; }
+      .numbers-copy { padding: 2rem; }
+      .revenue-row { grid-template-columns: 1fr; }
+      .closing-box::after { right: -9rem; bottom: -11rem; opacity: .45; }
+      .footer-grid { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="brand" href="#inicio" aria-label="Cimiento, inicio"><span class="mark">C</span><span>Cimiento</span></a>
+      <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#propuesta">La propuesta</a>
+        <a href="#modelo">El modelo</a>
+        <a href="#hoja-de-ruta">Hoja de ruta</a>
+        <a class="nav-cta" href="#vision">Ver la visión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Propuesta de negocio · financiación inmobiliaria</p>
+          <h1>Invertir en lo que se construye.</h1>
+          <p class="lead">Una plataforma diseñada para conectar a personas con proyectos inmobiliarios seleccionados, mediante una experiencia clara, trazable y accesible desde 100&nbsp;€.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#propuesta">Explorar el modelo <span class="arrow" aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="#hoja-de-ruta">Ver el lanzamiento</a>
+          </div>
+        </div>
+
+        <aside class="hero-panel" aria-label="Ejemplo conceptual de proyecto">
+          <div class="panel-top">
+            <span class="status"><span class="status-dot"></span> Proyecto en financiación</span>
+            <span>Ejemplo conceptual</span>
+          </div>
+          <div class="panel-metric">
+            <span class="metric-label">Objetivo de financiación</span>
+            <div class="metric-value">1,0 M€</div>
+            <span class="metric-note">Capital liberado por hitos certificados</span>
+            <div class="progress" aria-label="68 por ciento del objetivo"><span></span></div>
+          </div>
+          <div class="panel-grid">
+            <div class="panel-cell"><span class="metric-label">Entrada</span><b>desde 100 €</b></div>
+            <div class="panel-cell"><span class="metric-label">Estructura</span><b>por proyecto</b></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="thesis" id="vision">
+      <div class="wrap thesis-grid">
+        <div>
+          <p class="eyebrow">La visión</p>
+          <h2>El ladrillo deja de ser una barrera de entrada.</h2>
+          <p class="lead">Cimiento busca transformar grandes operaciones inmobiliarias en oportunidades comprensibles y fraccionadas, sin esconder el riesgo ni la complejidad real de cada obra.</p>
+        </div>
+        <div class="manifesto" aria-label="Principios del proyecto">
+          <div class="manifesto-row"><span>01</span><p>Acceso sencillo, inversión consciente.</p></div>
+          <div class="manifesto-row"><span>02</span><p>Cada euro vinculado a un proyecto concreto.</p></div>
+          <div class="manifesto-row"><span>03</span><p>Información de obra antes que promesas.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="propuesta">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Una plataforma, dos necesidades</p>
+            <h2>Capital para construir. Acceso para participar.</h2>
+          </div>
+          <div class="section-intro">
+            <p class="lead">El negocio conecta promotores que necesitan financiación complementaria con inversores que buscan exposición inmobiliaria sin comprar un inmueble completo.</p>
+          </div>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <span class="card-kicker">I</span>
+            <h3>Para el inversor</h3>
+            <p>Proyectos seleccionados, importes accesibles, documentación clara y seguimiento del avance desde un único lugar.</p>
+          </article>
+          <article class="card">
+            <span class="card-kicker">P</span>
+            <h3>Para el promotor</h3>
+            <p>Una vía digital para completar la financiación del proyecto, ganar visibilidad y construir una comunidad alrededor de la operación.</p>
+          </article>
+          <article class="card">
+            <span class="card-kicker">C</span>
+            <h3>Para Cimiento</h3>
+            <p>Ingresos por estructurar, financiar y administrar operaciones, con un modelo alineado con la ejecución real de los proyectos.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="model" id="modelo">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Cómo circula el capital</p>
+            <h2>Una ruta visible de principio a fin.</h2>
+          </div>
+          <div class="section-intro">
+            <p class="lead">La plataforma no se limita a publicar proyectos: organiza la evaluación, el cobro, los desembolsos, la supervisión y la devolución.</p>
+          </div>
+        </div>
+        <div class="flow" aria-label="Flujo de una inversión">
+          <article class="flow-step"><span class="flow-number">PASO 01</span><h3>Selección</h3><p>Revisión legal, financiera, técnica y comercial.</p></article>
+          <article class="flow-step"><span class="flow-number">PASO 02</span><h3>Publicación</h3><p>Plazo, garantías, riesgos y estrategia de salida.</p></article>
+          <article class="flow-step"><span class="flow-number">PASO 03</span><h3>Financiación</h3><p>Identificación del inversor y fondos segregados.</p></article>
+          <article class="flow-step"><span class="flow-number">PASO 04</span><h3>Ejecución</h3><p>Desembolsos vinculados a hitos de obra certificados.</p></article>
+          <article class="flow-step"><span class="flow-number">PASO 05</span><h3>Retorno</h3><p>Devolución proporcional de capital y rendimiento.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">La lógica operativa</p>
+            <h2>La confianza se diseña.</h2>
+          </div>
+          <div class="section-intro"><p class="lead">Cuatro decisiones estructurales convierten una idea atractiva en una plataforma defendible.</p></div>
+        </div>
+        <div class="logic-grid">
+          <article class="logic-card"><span class="logic-icon">01</span><div><h3>Separación por proyecto</h3><p>Cada operación mantiene sus contratos, flujos y riesgos identificados, evitando mezclar el capital de distintas promociones.</p></div></article>
+          <article class="logic-card"><span class="logic-icon">02</span><div><h3>Dinero fuera de la plataforma</h3><p>Los fondos se gestionan mediante un proveedor de pagos autorizado, separado de la cuenta operativa de Cimiento.</p></div></article>
+          <article class="logic-card"><span class="logic-icon">03</span><div><h3>Control de obra</h3><p>El capital se libera según avances verificados, con información periódica sobre costes, ventas, plazos e incidencias.</p></div></article>
+          <article class="logic-card"><span class="logic-icon">04</span><div><h3>Riesgo explicado</h3><p>La rentabilidad no se presenta como garantizada. Cada oportunidad muestra escenarios, garantías y posibilidad de pérdida.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="numbers" aria-labelledby="ingresos-title">
+      <div class="wrap numbers-shell">
+        <div class="numbers-copy">
+          <p class="eyebrow">Modelo de ingresos</p>
+          <h2 id="ingresos-title">Cobrar por crear y cuidar la operación.</h2>
+          <p>La hipótesis inicial concentra las comisiones en el promotor. Las cifras deberán validarse con operaciones reales, costes regulatorios y mercado.</p>
+        </div>
+        <div class="revenue-list" aria-label="Hipótesis de ingresos">
+          <div class="revenue-row"><span>Estructuración y análisis</span><b>tarifa fija</b></div>
+          <div class="revenue-row"><span>Éxito sobre capital captado</span><b>3–6 %</b></div>
+          <div class="revenue-row"><span>Administración y seguimiento</span><b>0,5–1,5 % anual</b></div>
+          <div class="revenue-row"><span>Recuperación de impagados</span><b>según operación</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="roadmap" id="hoja-de-ruta">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Hoja de ruta</p>
+            <h2>Empezar pequeño para construir confianza.</h2>
+          </div>
+          <div class="section-intro"><p class="lead">La expansión global llega después de demostrar selección, ejecución y devolución en un mercado inicial.</p></div>
+        </div>
+        <div class="timeline">
+          <article class="phase">
+            <span class="phase-label">Fase 01 · Validación</span>
+            <h3>Primeras operaciones</h3>
+            <ul><li>España y un único tipo de activo</li><li>Socio regulado y entidad de pago</li><li>De tres a cinco proyectos piloto</li><li>Entrada desde 100 €</li></ul>
+          </article>
+          <article class="phase">
+            <span class="phase-label">Fase 02 · Plataforma</span>
+            <h3>Escala controlada</h3>
+            <ul><li>Autorización y estructura propias</li><li>Automatización del seguimiento</li><li>Reinversión y aportaciones periódicas</li><li>Expansión dentro del EEE</li></ul>
+          </article>
+          <article class="phase">
+            <span class="phase-label">Fase 03 · Expansión</span>
+            <h3>Nuevos mercados</h3>
+            <ul><li>Más clases de proyectos</li><li>Equity y rentas</li><li>Capital institucional</li><li>Países adicionales uno por uno</li></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="wrap">
+        <div class="closing-box">
+          <p class="eyebrow">El punto de partida</p>
+          <h2>La primera inversión es en el modelo.</h2>
+          <p class="lead">Antes de construir tecnología, Cimiento debe validar el perfil del inversor, el tipo de proyecto, la estructura regulatoria y la economía de una primera operación.</p>
+          <a class="button button-primary" href="#inicio">Volver al comienzo <span class="arrow" aria-hidden="true">↑</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-grid">
+      <span class="footer-brand">Cimiento</span>
+      <p>Propuesta conceptual de negocio. No constituye una oferta de inversión, asesoramiento financiero ni garantía de rentabilidad. La actividad estará sujeta a las autorizaciones y normas aplicables antes de su lanzamiento.</p>
+    </div>
+  </footer>
+</body>
+</html>
