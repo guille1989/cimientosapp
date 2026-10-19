@@ -1,0 +1,102 @@
+import { test, expect } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
+
+let onboardingEmail: string | undefined;
+test.afterEach(async () => {
+  if (!onboardingEmail) return;
+  const database = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL || "file:./dev.db" } } });
+  try {
+    const user = await database.user.findUnique({ where: { email: onboardingEmail } });
+    if (user) { await database.auditEvent.deleteMany({ where: { userId: user.id } }); await database.user.delete({ where: { id: user.id } }); }
+  } finally { onboardingEmail = undefined; await database.$disconnect(); }
+});
+
+test("Explorar proyecto → simular → aceptar riesgos → confirmar → cartera → cancelar en reflexión", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on("pageerror", error => consoleErrors.push(error.message));
+  await page.goto("/acceso");
+  await page.getByLabel("Correo electrónico", { exact: true }).fill("inversor@cimiento.demo");
+  await page.getByLabel("Contraseña", { exact: true }).fill("Demo123!");
+  await page.getByRole("button", { name: "Entrar", exact: true }).click();
+  await expect(page).toHaveURL(/\/inversor$/);
+  await page.goto("/proyectos");
+  await page.getByRole("link", { name: "Ver Patio Chamberí", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Patio Chamberí", exact: true })).toBeVisible();
+  const amount = page.getByLabel("Cantidad personalizada (€)");
+  await amount.fill("99");
+  await expect(page.locator("#investment-validation")).toContainText("La inversión mínima es");
+  await expect(page.getByRole("button", { name: "Invertir · demostración" })).toBeDisabled();
+  await amount.fill("100");
+  await expect(page.getByText("Escenario bruto final", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Invertir · demostración" }).click();
+  const review = page.getByRole("dialog", { name: "Revisa tu compromiso" });
+  await expect(review).toBeVisible();
+  await expect(review.getByRole("button", { name: "Continuar al proveedor simulado" })).toBeDisabled();
+  await review.getByLabel("Comprendo que puedo perder parte o todo el capital.", { exact: true }).check();
+  await review.getByLabel("Acepto que puede haber retrasos e impagos y que no existe liquidez garantizada.", { exact: true }).check();
+  await review.getByLabel("Comprendo que la rentabilidad objetivo y el plazo no están garantizados.", { exact: true }).check();
+  await review.getByLabel("He revisado la documentación ficticia y las condiciones de esta demostración.", { exact: true }).check();
+  await review.getByRole("button", { name: "Continuar al proveedor simulado" }).click();
+  const provider = page.getByRole("dialog", { name: "Proveedor de pagos simulado" });
+  await expect(provider).toContainText("No introduzcas una tarjeta");
+  await provider.getByLabel("Autorizo únicamente el registro de este movimiento ficticio. Comprendo que no se realiza un pago real.", { exact: true }).check();
+  await provider.getByRole("button", { name: "Confirmar compromiso ficticio" }).click();
+  const success = page.getByRole("dialog", { name: "Compromiso creado" });
+  await expect(success).toBeVisible();
+  await success.getByRole("link", { name: "Consultar mi cartera" }).click();
+  await expect(page).toHaveURL(/\/inversor\/cartera$/);
+  const row = page.locator("tbody tr").first();
+  await expect(row).toContainText("Patio Chamberí");
+  await expect(row).toContainText("En reflexión");
+  await row.getByRole("button", { name: "Cancelar", exact: true }).click();
+  const cancellation = page.getByRole("dialog", { name: "Cancelar durante la reflexión" });
+  await cancellation.getByRole("button", { name: "Confirmar cancelación" }).click();
+  await expect(cancellation).toBeHidden();
+  await expect(row).toContainText("Cancelado");
+  await expect(row.getByRole("button", { name: "Cancelar", exact: true })).toHaveCount(0);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("Onboarding nuevo: borrador persistente, test y aceptación expresa del riesgo", async ({ page }) => {
+  await page.goto("/registro");
+  await page.getByLabel("Nombre ficticio", { exact: true }).fill("Perfil UI · Demo");
+  onboardingEmail = `ui-${Date.now()}@cimiento.demo`;
+  await page.getByLabel("Correo ficticio", { exact: true }).fill(onboardingEmail);
+  await page.getByLabel("Contraseña de demostración").fill("Demo123!");
+  await page.getByLabel("Entiendo que esta cuenta solo sirve para probar el entorno ficticio y que no debo facilitar datos reales.", { exact: true }).check();
+  await page.getByRole("button", { name: "Crear mi cuenta" }).click();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByRole("heading", { name: "Datos personales", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("combobox", { name: "País de residencia fiscal ficticio", exact: true }).selectOption("Portugal");
+  await page.getByRole("button", { name: "Guardar y continuar más tarde" }).click();
+  await expect(page.getByText("Borrador guardado. Puedes salir y continuar en otro momento.", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Residencia fiscal", exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "País de residencia fiscal ficticio", exact: true })).toHaveValue("Portugal");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("button", { name: "Adjuntar identidad ficticia" }).click();
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("combobox", { name: "Situación laboral simulada", exact: true }).selectOption("employed");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("combobox", { name: "Experiencia con inversiones no garantizadas", exact: true }).selectOption("experienced");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("combobox", { name: "Objetivo de inversión ficticio", exact: true }).selectOption("diversification");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("combobox", { name: "¿Qué pérdida podrías soportar en este supuesto?", exact: true }).selectOption("total");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("combobox", { name: "Origen ficticio de los fondos", exact: true }).selectOption("salary");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await page.getByRole("combobox", { name: "1. Si el promotor no puede devolver el préstamo…", exact: true }).selectOption("loss");
+  await page.getByRole("combobox", { name: "2. ¿Puedo retirar mi inversión en cualquier momento?", exact: true }).selectOption("illiquid");
+  await page.getByRole("combobox", { name: "3. En el modelo previsto, ¿quién administra los fondos?", exact: true }).selectOption("external");
+  await page.getByRole("button", { name: "Continuar", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Advertencias", exact: true })).toBeVisible();
+  await expect(page.getByText("Resultado: 3 / 3 respuestas correctas.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Aceptar y completar" }).click();
+  await expect(page.getByRole("heading", { name: "Advertencias", exact: true })).toBeVisible();
+  await page.getByLabel("He leído y acepto expresamente estos riesgos. Comprendo que este entorno, su identificación y sus verificaciones son ficticios.", { exact: true }).check();
+  await page.getByRole("button", { name: "Aceptar y completar" }).click();
+  await expect(page.getByRole("heading", { name: "Tu perfil ya tiene una base." })).toBeVisible();
+  await expect(page.getByText("Aprobado", { exact: true })).toBeVisible();
+});

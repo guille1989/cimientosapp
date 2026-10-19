@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env
+prisma/*.db*
+playwright-report/
+test-results/
+*.tsbuildinfo
+.sites-runtime/
+output/
+tmp/

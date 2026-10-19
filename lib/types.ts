@@ -1,0 +1,26 @@
+export type Role = "INVESTOR" | "PROMOTER" | "ADMIN";
+export type ProjectStatus = "DRAFT" | "SUBMITTED" | "ANALYSIS" | "INFO_REQUIRED" | "APPROVED" | "PUBLISHED" | "FUNDING" | "FUNDED" | "IN_PROGRESS" | "REPAID" | "DELAYED" | "RECOVERY" | "CANCELLED" | "COMING_SOON";
+export type CommitmentStatus = "REFLECTION" | "CONFIRMED" | "INVESTED" | "CANCELLED" | "REFUNDED" | "REPAID";
+export type RiskLevel = "A" | "B" | "C" | "D";
+export type User = { id: string; name: string; email: string; role: Role; onboardingStatus: string; profile?: Record<string, any>; notificationPreferences?: Record<string, boolean> };
+export type Milestone = { id: string; projectId: string; name: string; description: string; expectedDate: string; actualDate?: string | null; amount: number; status: string; evidence?: string | null; certified: boolean; approved: boolean };
+export type ProjectDocument = { id: string; projectId: string; name: string; category: string; createdAt: string };
+export type ProjectUpdate = { id: string; projectId: string; title: string; content: string; createdAt: string };
+export type Project = {
+  id: string; slug: string; name: string; city: string; address: string; promoterId: string; promoterName: string;
+  type: "DEBT" | "EQUITY" | "RENTAL"; status: ProjectStatus; target: number; funded: number; investors: number;
+  minInvestment: number; duration: number; annualRate: number; ltv: number; risk: RiskLevel; mortgage: boolean;
+  image: string; description: string; useOfFunds: string; guarantees: string; exitStrategy: string;
+  budget: number; ownCapital: number; bankFinancing: number; contingency: number; presales: number;
+  experience: number; licenses: string; land: string; planning: string; startDate: string; endDate: string;
+  fundingDeadline: string; createdAt: string; risks: string; milestones: Milestone[];
+  documents: ProjectDocument[]; updates: ProjectUpdate[]; riskAssessment?: Record<string, any>;
+  reviewMessage?: string; progress: number;
+};
+export type Commitment = { id: string; userId: string; projectId: string; amount: number; status: CommitmentStatus; createdAt: string; reflectionEndsAt: string; capitalReturned: number; interestReceived: number };
+export type Transaction = { id: string; userId: string; projectId: string; type: string; amount: number; description: string; createdAt: string };
+export type Distribution = { id: string; projectId: string; userId: string; capital: number; interest: number; scheduledAt: string; status: string };
+export type Notification = { id: string; userId: string; title: string; content: string; read: boolean; createdAt: string };
+export type AuditEvent = { id: string; userId: string; userName?: string; action: string; entity: string; entityId: string; before: string; after: string; createdAt: string };
+export type AppState = { user: User | null; projects: Project[]; commitments: Commitment[]; transactions: Transaction[]; distributions: Distribution[]; notifications: Notification[]; users: User[]; audit: AuditEvent[]; onboarding?: Record<string, any>; reflectionHours: number; demo: boolean };
+export type ActionResult = { ok: boolean; message: string; data?: any };
