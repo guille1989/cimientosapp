@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
+  experimental: { turbopackFileSystemCacheForDev: false },
   serverExternalPackages: ["@prisma/client"],
   async headers() { return [{ source: "/:path*", headers: [
     { key: "X-Content-Type-Options", value: "nosniff" },

@@ -37,6 +37,10 @@ Detén `npm run dev` antes de construir o ejecutar la versión de producción, p
 
 En Windows, Prisma 6 puede devolver `Schema engine error` si aún no existe el archivo SQLite: `scripts/ensure-db.mjs`, incluido en los comandos de preparación, crea el archivo vacío sin borrar una base existente. Si npm requiere aprobar scripts de instalación, revisa los paquetes indicados por npm; `prisma generate` descarga y prepara el motor durante `db:setup`.
 
+## Despliegue en Vercel
+
+El repositorio incluye configuración de Next.js y Node 24 para Vercel, un build que genera Prisma y aplica migraciones PostgreSQL, y carga opcional de datos ficticios. SQLite se conserva para uso local. Consulta [VERCEL.md](VERCEL.md) y la plantilla de variables [.env.vercel.example](.env.vercel.example) antes de importar el proyecto. El despliegue requiere una base PostgreSQL y sus dos cadenas de conexión; no publica ni contrata servicios automáticamente.
+
 ## Cuentas de demostración
 
 Contraseña común: **`Demo123!`**.
@@ -156,3 +160,20 @@ Identificadas como **Próximamente**: aportaciones periódicas, reinversión aut
 ## Antes de operar una plataforma real
 
 Serían necesarios el análisis jurídico y regulatorio y las autorizaciones aplicables, proveedores autorizados de pagos/custodia y KYC/AML, identidad y seguridad de producción, contratos y documentación revisados por profesionales, evaluación real de promotores y garantías, certificaciones técnicas independientes, fiscalidad, protección de datos, conciliación contable, gestión real de impagos/recuperaciones, auditoría, observabilidad, tareas programadas, backups y recuperación ante incidentes. Las interfaces de demostración deben sustituirse por esos servicios; este repositorio no es suficiente para captar fondos ni ofrecer inversiones reales.
+
+
+## Español e inglés
+
+La aplicación incluye internacionalización `es` y `en` con el selector de idioma de la cabecera, también disponible en móvil. La preferencia se conserva durante un año en la cookie `cimiento_locale` y se aplica en el servidor a la primera carga, al idioma del HTML y a los metadatos. Español es el valor predeterminado. Las rutas y la sesión se conservan al cambiar de idioma.
+
+- Catálogos revisados: `messages/es.json` y `messages/en.json`. Los mensajes originales en español son sus identificadores estables.
+- Cliente: `I18nProvider`, `useI18n()`, `t()`, `formatMoney()` y `formatDate()`. La traducción se realiza en React; no hay traducción del DOM ni un servicio externo.
+- Servidor: `getServerLocale()` y `requestLocale()`. Las API aceptan la cookie o el encabezado validado `x-cimiento-locale: es|en`.
+- Se traducen páginas públicas, los tres portales, formularios, navegación, accesibilidad, estados, validaciones, mensajes, notificaciones del sistema, documentación y CSV. El contenido inicial ficticio dispone de traducciones, incluidos hitos, informes y riesgos.
+- Formatos: `es-ES` y `en-GB`, siempre en euros y con fechas del mercado español (`Europe/Madrid`). Los CSV conservan fechas ISO para interoperabilidad y localizan sus cabeceras, descripciones y separador decimal.
+- Los plurales utilizan `Intl.PluralRules`. Las interpolaciones se validan mediante pruebas.
+- Los nombres propios, identificadores, números, respuestas internas del onboarding y texto libre escrito por usuarios se conservan. Los formularios no reescriben datos guardados al cambiar de idioma; el texto libre nuevo requiere traducción editorial si debe publicarse en varios idiomas. No se promete traducción automática.
+
+Para añadir una traducción, incorpora el mensaje y su equivalente a ambos catálogos y utiliza `t("Mensaje original")` para textos visibles. No traduzcas valores de formularios, rutas, IDs ni estados internos. Para mensajes con variables utiliza `t("Hola, {value0}.", {value0: nombre})`.
+
+Pruebas: `npm test` comprueba catálogos, interpolaciones, formatos, idioma válido y mensajes heredados. `npx playwright test tests/i18n.spec.ts` comprueba persistencia y metadatos, inversión y cancelación en inglés, documentos, CSV, errores y roles. `node scripts/verify-i18n.mjs` recorre 80 combinaciones de pantalla, idioma y tamaño, comprueba la consola y genera capturas e informe en `output/qa-i18n/`.

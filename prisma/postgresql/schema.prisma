@@ -1,0 +1,278 @@
+// Generated from prisma/schema.prisma. Run npm run db:sync:postgres after model changes.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  INVESTOR
+  PROMOTER
+  ADMIN
+}
+enum OnboardingStatus {
+  PENDING
+  APPROVED
+  REVIEW_REQUIRED
+}
+enum ProjectStatus {
+  DRAFT
+  SUBMITTED
+  ANALYSIS
+  INFO_REQUIRED
+  APPROVED
+  PUBLISHED
+  FUNDING
+  FUNDED
+  IN_PROGRESS
+  REPAID
+  DELAYED
+  RECOVERY
+  CANCELLED
+  COMING_SOON
+}
+enum ProjectType {
+  DEBT
+  EQUITY
+  RENTAL
+}
+enum CommitmentStatus {
+  REFLECTION
+  CONFIRMED
+  INVESTED
+  CANCELLED
+  REFUNDED
+  REPAID
+}
+enum MilestoneStatus {
+  PLANNED
+  VALIDATION_REQUESTED
+  APPROVED
+  DISBURSED
+}
+enum TransactionType {
+  COMMITMENT
+  CANCELLATION
+  REFUND
+  DISTRIBUTION
+  CAPITAL_RETURN
+  ADJUSTMENT
+  DISBURSEMENT
+}
+
+model User {
+  id                      String   @id @default(cuid())
+  name                    String
+  email                   String   @unique
+  passwordHash            String
+  role                    Role
+  onboardingStatus        OnboardingStatus @default(PENDING)
+  notificationPreferences String   @default("{\"newProjects\":true,\"updates\":true,\"delays\":true,\"distributions\":true,\"incidents\":true,\"documents\":true}")
+  createdAt               DateTime @default(now())
+  investorProfile         InvestorProfile?
+  promoterProfile         PromoterProfile?
+  assessment              SuitabilityAssessment?
+  sessions                Session[]
+  projects                Project[]
+  commitments             InvestmentCommitment[]
+  transactions            Transaction[]
+  distributions           Distribution[]
+  notifications           Notification[]
+  audit                   AuditEvent[]
+}
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+model InvestorProfile {
+  id            String @id @default(cuid())
+  userId        String @unique
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fiscalCountry String @default("España")
+  bankAccount   String @default("DEMO ES00 0000 0000 0000 0000 0000")
+  values        String @default("{}")
+  currentStep   Int @default(1)
+  completedAt   DateTime?
+}
+model PromoterProfile {
+  id         String @id @default(cuid())
+  userId     String @unique
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company    String
+  experience Int @default(0)
+  description String @default("")
+}
+model SuitabilityAssessment {
+  id               String @id @default(cuid())
+  userId           String @unique
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers          String @default("{}")
+  score            Int @default(0)
+  suitable         Boolean @default(false)
+  riskAcknowledged Boolean @default(false)
+  status           OnboardingStatus @default(PENDING)
+  completedAt      DateTime?
+}
+model Project {
+  id                String @id @default(cuid())
+  slug              String @unique
+  name              String
+  city              String
+  address           String @default("Ubicación ficticia")
+  promoterId        String
+  promoter          User @relation(fields: [promoterId], references: [id])
+  type              ProjectType @default(DEBT)
+  status            ProjectStatus @default(DRAFT)
+  fundedCents       Int @default(0)
+  investorCount     Int @default(0)
+  minInvestmentCents Int @default(10000)
+  duration          Int @default(18)
+  annualRate        Float @default(8)
+  ltv               Float @default(60)
+  risk              String @default("C")
+  mortgage          Boolean @default(false)
+  image             String @default("/assets/cimiento-hero.png")
+  description       String @default("")
+  useOfFunds        String @default("")
+  guarantees        String @default("")
+  exitStrategy      String @default("")
+  experience        Int @default(0)
+  licenses          String @default("Pendiente de revisión")
+  land              String @default("")
+  planning          String @default("")
+  startDate         DateTime @default(now())
+  endDate           DateTime @default(now())
+  fundingDeadline   DateTime @default(now())
+  risks             String @default("Riesgo de pérdida total o parcial, retraso, impago y falta de liquidez.")
+  reviewMessage     String @default("")
+  createdAt         DateTime @default(now())
+  financials        ProjectFinancials?
+  riskAssessment    ProjectRiskAssessment?
+  milestones        ProjectMilestone[]
+  documents         ProjectDocument[]
+  updates           ProjectUpdate[]
+  commitments       InvestmentCommitment[]
+  transactions      Transaction[]
+  distributions     Distribution[]
+  @@index([status])
+}
+model ProjectFinancials {
+  id                 String @id @default(cuid())
+  projectId          String @unique
+  project            Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  targetCents        Int
+  budgetCents        Int
+  ownCapitalCents    Int @default(0)
+  bankFinancingCents Int @default(0)
+  contingencyCents   Int @default(0)
+  presales           Float @default(0)
+}
+model ProjectRiskAssessment {
+  id            String @id @default(cuid())
+  projectId     String @unique
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  score         Int
+  factors       String
+  decision      String @default("PENDING")
+  justification String @default("")
+  reviewedAt    DateTime?
+}
+model ProjectMilestone {
+  id            String @id @default(cuid())
+  projectId     String
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name          String
+  description   String
+  expectedDate  DateTime
+  actualDate    DateTime?
+  amountCents   Int
+  evidence      String?
+  status        MilestoneStatus @default(PLANNED)
+  certified     Boolean @default(false)
+  approved      Boolean @default(false)
+  @@index([projectId])
+}
+model ProjectDocument {
+  id        String @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  category  String
+  createdAt DateTime @default(now())
+}
+model ProjectUpdate {
+  id        String @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+}
+model InvestmentCommitment {
+  id               String @id @default(cuid())
+  userId           String
+  user             User @relation(fields: [userId], references: [id])
+  projectId        String
+  project          Project @relation(fields: [projectId], references: [id])
+  amountCents      Int
+  status           CommitmentStatus @default(REFLECTION)
+  acceptances      String
+  reflectionEndsAt DateTime
+  capitalReturnedCents Int @default(0)
+  interestReceivedCents Int @default(0)
+  createdAt        DateTime @default(now())
+  @@index([userId])
+  @@index([projectId, status])
+}
+model Transaction {
+  id          String @id @default(cuid())
+  userId      String
+  user        User @relation(fields: [userId], references: [id])
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id])
+  type        TransactionType
+  amountCents Int
+  description String
+  createdAt   DateTime @default(now())
+  @@index([userId])
+}
+model Distribution {
+  id            String @id @default(cuid())
+  projectId     String
+  project       Project @relation(fields: [projectId], references: [id])
+  userId        String
+  user          User @relation(fields: [userId], references: [id])
+  capitalCents  Int
+  interestCents Int
+  scheduledAt   DateTime
+  status        String @default("SCHEDULED")
+}
+model Notification {
+  id        String @id @default(cuid())
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  read      Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+model AuditEvent {
+  id        String @id @default(cuid())
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  before    String @default("{}")
+  after     String @default("{}")
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}

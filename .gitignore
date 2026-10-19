@@ -8,3 +8,8 @@ test-results/
 .sites-runtime/
 output/
 tmp/
+
+.env.*
+!.env.example
+!.env.vercel.example
+.vercel/

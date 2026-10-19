@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { expectedRequestOrigin } from "./request-origin";
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from "node:crypto";
 import { db } from "./db";
 import { DomainError } from "./domain";
@@ -20,11 +21,7 @@ const buckets = new Map<string, { count: number; until: number }>();
 export function rateLimit(key: string, maximum = 120, period = 60_000) { const now = Date.now(); if (buckets.size > 5000) for (const [k, v] of buckets) if (v.until < now) buckets.delete(k); const current = buckets.get(key); if (!current || current.until < now) buckets.set(key, { count: 1, until: now + period }); else { current.count++; if (current.count > maximum) throw new DomainError("Demasiadas solicitudes. Espera un minuto y vuelve a intentarlo.", 429); } }
 export function validateOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  const url = new URL(request.url);
-  // Next may normalize request.url to localhost while the browser used 127.0.0.1.
-  // Compare against the actual HTTP Host; never trust arbitrary forwarded origins.
-  const host = request.headers.get("host") || url.host;
-  const expected = process.env.APP_ORIGIN || `${url.protocol}//${host}`;
+  const expected = expectedRequestOrigin(request);
   if (origin && origin !== expected) throw new DomainError("Origen de solicitud no permitido.", 403);
   const site = request.headers.get("sec-fetch-site");
   if (site === "cross-site") throw new DomainError("Solicitud entre sitios no permitida.", 403);

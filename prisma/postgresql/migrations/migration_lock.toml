@@ -1,0 +1,2 @@
+# PostgreSQL has its own migration history. Local SQLite migrations stay in prisma/migrations.
+provider = "postgresql"
