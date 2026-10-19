@@ -45,14 +45,14 @@ export function AppProvider({ children }: {
             const response = await fetch("/api/actions", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "x-cimiento-locale": _locale }, body: JSON.stringify({ action, payload }) });
             const result: ActionResult = await response.json();
             if (!response.ok || !result.ok)
-                return { ok: false, message: result.message || "La operación no se ha completado. Revisa los datos." };
+                return { ok: false, status: response.status, message: result.message || "La operación no se ha completado. Revisa los datos." };
             await refresh();
             if (result.message)
                 setToast(result.message);
             return result;
         }
         catch {
-            return { ok: false, message: "No hay conexión con el servidor. Tu operación no se ha confirmado; puedes reintentarlo." };
+            return { ok: false, status: 0, message: "No hay conexión con el servidor. Tu operación no se ha confirmado; puedes reintentarlo." };
         }
     }, [refresh]);
     return <Context.Provider value={{ state, loading, error, refresh, act }}>{_t(children)}{_t(toast && <div className="toast" role="status"><span className="status-dot"/>{_t(toast)}<button aria-label={_t("Cerrar notificaci\u00F3n")} onClick={() => setToast("")}>{_t("\u00D7")}</button></div>)}</Context.Provider>;

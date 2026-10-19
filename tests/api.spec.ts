@@ -1,7 +1,8 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 
-const action = (request: APIRequestContext, action: string, payload: unknown) => request.post("/api/actions", { data: { action, payload } });
+const action = (request: APIRequestContext, action: string, payload: unknown) => request.post("/api/actions", { data: { action, payload: action === "invest" && payload && typeof payload === "object" ? { idempotencyKey: randomUUID(), ...payload } : payload } });
 const login = async (request: APIRequestContext, role: string) => {
   const response = await action(request, "login", { email: `${role}@cimiento.demo`, password: "Demo123!" });
   expect(response.ok(), `Login ${role}: ${response.status()} ${await response.text()}`).toBeTruthy(); expect((await response.json()).ok).toBe(true);

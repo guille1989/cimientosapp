@@ -23,4 +23,4 @@ export type Distribution = { id: string; projectId: string; userId: string; capi
 export type Notification = { id: string; userId: string; title: string; content: string; read: boolean; createdAt: string };
 export type AuditEvent = { id: string; userId: string; userName?: string; action: string; entity: string; entityId: string; before: string; after: string; createdAt: string };
 export type AppState = { user: User | null; projects: Project[]; commitments: Commitment[]; transactions: Transaction[]; distributions: Distribution[]; notifications: Notification[]; users: User[]; audit: AuditEvent[]; onboarding?: Record<string, any>; reflectionHours: number; demo: boolean };
-export type ActionResult = { ok: boolean; message: string; data?: any };
+export type ActionResult = { ok: boolean; message: string; data?: any; status?: number };

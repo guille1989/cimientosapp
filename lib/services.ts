@@ -126,22 +126,57 @@ export async function performAction(action: string, raw: unknown) {
   if (action === "invest") {
     assertRole(u.role, ["INVESTOR"]);
     if (u.onboardingStatus !== "APPROVED") throw new DomainError("Completa el onboarding y espera su aprobación antes de invertir.", 403);
-    const v = z.object({ projectId: idSchema, amount: z.coerce.number().finite(), acceptances: z.object({ loss: z.literal(true), illiquidity: z.literal(true), notGuaranteed: z.literal(true), documents: z.literal(true) }), paymentAccepted: z.literal(true) }).parse(payload);
-    const result = await db.$transaction(async tx => {
-      const p = await findProject(tx, v.projectId);
-      if (p.type !== "DEBT" || p.status !== "FUNDING" || p.fundingDeadline <= new Date()) throw new DomainError("Este proyecto está cerrado o todavía no admite compromisos.");
-      const target = p.financials?.targetCents || 0; validateInvestment(v.amount, euros(target - p.fundedCents), euros(p.minInvestmentCents));
-      const alreadyInvestor = await tx.investmentCommitment.count({ where: { projectId: p.id, userId: u.id, status: { in: ACTIVE_COMMITMENTS as any } } });
-      const reserved = await tx.project.updateMany({ where: { id: p.id, status: "FUNDING", fundedCents: p.fundedCents }, data: { fundedCents: { increment: cents(v.amount) } } });
-      if (reserved.count !== 1) throw new DomainError("El capital disponible ha cambiado. Actualiza el proyecto e inténtalo de nuevo.", 409);
-      const payment = await paymentProvider.reserve({ userId: u.id, projectId: p.id, amountCents: cents(v.amount) });
-      const c = await tx.investmentCommitment.create({ data: { userId: u.id, projectId: p.id, amountCents: cents(v.amount), acceptances: json({ ...v.acceptances, paymentReference: payment.reference, administrator: payment.administrator }), reflectionEndsAt: new Date(Date.now() + reflectionHours() * 3600_000) } });
-      await tx.project.update({ where: { id: p.id }, data: { ...(!alreadyInvestor ? { investorCount: { increment: 1 } } : {}), ...(p.fundedCents + cents(v.amount) === target ? { status: "FUNDED" } : {}) } });
-      await tx.transaction.create({ data: { userId: u.id, projectId: p.id, type: "COMMITMENT", amountCents: -c.amountCents, description: "Compromiso ficticio. Fondos administrados por proveedor de pagos externo simulado." } });
-      await notify(tx, u.id, "Compromiso registrado", `Puedes cancelar durante las próximas ${reflectionHours()} horas desde tu cartera.`); await audit(tx, u.id, "INVESTMENT_COMMITTED", "InvestmentCommitment", c.id, {}, { amount: v.amount, projectId: p.id });
-      return c.id;
-    }); return { message: "Compromiso ficticio registrado. Tu periodo de reflexión está activo.", data: { id: result } };
+    const v = z.object({
+      projectId: idSchema,
+      idempotencyKey: z.uuid("La referencia de la solicitud no es válida. Actualiza la página y vuelve a intentarlo."),
+      amount: z.coerce.number().finite().int().min(100).max(10_000_000),
+      acceptances: z.object({ loss: z.literal(true), illiquidity: z.literal(true), notGuaranteed: z.literal(true), documents: z.literal(true) }),
+      paymentAccepted: z.literal(true),
+    }).parse(payload);
+    const where = { userId_idempotencyKey: { userId: u.id, idempotencyKey: v.idempotencyKey } };
+    const response = (c: { id: string; projectId: string; amountCents: number; status: string; reflectionEndsAt: Date }, replayed: boolean) => {
+      if (c.projectId !== v.projectId || c.amountCents !== cents(v.amount))
+        throw new DomainError("Esta referencia ya se utilizó con otro proyecto o importe. Consulta tu cartera antes de continuar.", 409);
+      return {
+        message: replayed ? "La solicitud ya estaba registrada. Hemos recuperado tu compromiso sin duplicarlo." : "Compromiso ficticio registrado. Tu periodo de reflexión está activo.",
+        data: { id: c.id, status: c.status, amount: euros(c.amountCents), reflectionEndsAt: c.reflectionEndsAt.toISOString(), replayed },
+      };
+    };
+    // Check before capacity/status: a successful request may have fully funded the project.
+    const existing = await db.investmentCommitment.findUnique({ where });
+    if (existing) return response(existing, true);
+    try {
+      return await db.$transaction(async tx => {
+        const duplicate = await tx.investmentCommitment.findUnique({ where });
+        if (duplicate) return response(duplicate, true);
+        const p = await findProject(tx, v.projectId);
+        if (p.type !== "DEBT" || p.status !== "FUNDING" || p.fundingDeadline <= new Date()) throw new DomainError("Este proyecto está cerrado o todavía no admite compromisos.");
+        const target = p.financials?.targetCents || 0;
+        validateInvestment(v.amount, euros(target - p.fundedCents), euros(p.minInvestmentCents));
+        const alreadyInvestor = await tx.investmentCommitment.count({ where: { projectId: p.id, userId: u.id, status: { in: ACTIVE_COMMITMENTS as any } } });
+        const reserved = await tx.project.updateMany({ where: { id: p.id, status: "FUNDING", fundedCents: p.fundedCents }, data: { fundedCents: { increment: cents(v.amount) } } });
+        if (reserved.count !== 1) throw new DomainError("El capital disponible ha cambiado. Actualiza el proyecto e inténtalo de nuevo.", 409);
+        const payment = await paymentProvider.reserve({ userId: u.id, projectId: p.id, amountCents: cents(v.amount) });
+        const c = await tx.investmentCommitment.create({ data: {
+          userId: u.id, projectId: p.id, idempotencyKey: v.idempotencyKey, amountCents: cents(v.amount),
+          acceptances: json({ ...v.acceptances, paymentReference: payment.reference, administrator: payment.administrator }),
+          reflectionEndsAt: new Date(Date.now() + reflectionHours() * 3600_000),
+        } });
+        await tx.project.update({ where: { id: p.id }, data: { ...(!alreadyInvestor ? { investorCount: { increment: 1 } } : {}), ...(p.fundedCents + cents(v.amount) === target ? { status: "FUNDED" } : {}) } });
+        await tx.transaction.create({ data: { userId: u.id, projectId: p.id, type: "COMMITMENT", amountCents: -c.amountCents, description: "Compromiso ficticio. Fondos administrados por proveedor de pagos externo simulado." } });
+        await notify(tx, u.id, "Compromiso registrado", "Puedes cancelar durante las próximas " + reflectionHours() + " horas desde tu cartera.");
+        await audit(tx, u.id, "INVESTMENT_COMMITTED", "InvestmentCommitment", c.id, {}, { amount: v.amount, projectId: p.id, idempotencyKey: v.idempotencyKey });
+        return response(c, false);
+      });
+    } catch (error) {
+      // A concurrent winner may have committed while this transaction rolled back.
+      // The database unique constraint also prevents duplicate movements/audit events.
+      const completed = await db.investmentCommitment.findUnique({ where }).catch(() => null);
+      if (completed) return response(completed, true);
+      throw error;
+    }
   }
+
   if (action === "cancelCommitment") {
     assertRole(u.role, ["INVESTOR"]); const v = z.object({ id: idSchema }).parse(payload);
     await db.$transaction(async tx => { const c = await tx.investmentCommitment.findUnique({ where: { id: v.id } }); if (!c || c.userId !== u.id) throw new DomainError("Compromiso no encontrado.", 404); if (!canCancel(c.status, c.reflectionEndsAt)) throw new DomainError("El periodo de reflexión ha finalizado o el compromiso ya no se puede cancelar.");

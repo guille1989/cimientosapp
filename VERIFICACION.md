@@ -64,3 +64,30 @@ La primera suite de navegador en producción alcanzó el límite de 20 intentos 
 La base local de prueba de Prisma dev usa pgBouncer=true en la conexión de ejecución para evitar colisiones de sentencias preparadas en su proxy PGlite. Las cadenas del proveedor alojado deberán seguir sus propias instrucciones de pooling para Prisma 6; no se han probado credenciales cloud.
 
 Las capturas y trazas están en output/qa-vercel-postgres y output/qa-vercel-management. Para completar el despliegue faltan la base PostgreSQL alojada y las variables de su entorno en Vercel; no pueden reemplazarse por la URL file: de desarrollo. La plantilla excluye datos locales, credenciales y artefactos del envío por CLI.
+
+
+## Recorrido del inversor y confirmación idempotente — 19 de octubre de 2026
+
+Cada intención de inversión lleva una referencia UUID obligatoria. La restricción única por usuario y referencia, junto con la transacción de inversión, evita duplicar compromiso, movimiento y auditoría. Los reintentos devuelven el mismo compromiso y su estado actual, incluso después de financiar por completo el proyecto o cancelar el compromiso. Una referencia ya utilizada no admite cambiar proyecto ni importe.
+
+La interfaz conserva la referencia en el almacenamiento de la pestaña, recupera solicitudes tras una respuesta perdida y recarga, muestra el estado y la fecha de reflexión reales del compromiso y ofrece volver a acceder si la sesión ha expirado. Incluye mensajes en español e inglés y una presentación del aviso pendiente adaptada a móvil. La recuperación no se comparte entre dispositivos ni sobrevive a la eliminación del almacenamiento de la pestaña.
+
+| Comprobación | Resultado |
+| --- | --- |
+| Migración SQLite sobre la base local existente | Correcta; copia previa en output/qa-investor/dev-before-idempotency.db |
+| Comparación antes/después: usuarios, proyectos, compromisos, movimientos y suma financiada | Sin cambios |
+| Migración PostgreSQL desde el esquema anterior con datos semilla ya cargados | Correcta, mediante Prisma Postgres local (prisma dev/PGlite) |
+| npm test | 17/17 |
+| Regresión API/navegador, cinco archivos anteriores | 17/17 en 26,0 segundos |
+| Pruebas nuevas en SQLite | 4/4; también repetidas junto al grupo de gestión: 7/7 |
+| Pruebas nuevas con PostgreSQL local y next start | 4/4 en 18,0 segundos |
+| Build local con SQLite | Correcto |
+| npm run vercel-build con PostgreSQL local | Correcto |
+
+Las pruebas nuevas verifican tres solicitudes simultáneas con la misma referencia, reintentos cuando el proyecto ya está financiado, repetición después de cancelar, inversión intencional con referencia nueva, rechazo de contenido incompatible, separación entre usuarios y validación de referencias. El navegador usa una cuenta nueva, completa el onboarding y guarda/reanuda su borrador; después pierde deliberadamente la respuesta de una inversión aceptada, recarga, recupera la misma operación y la cancela. El recorrido se ejecuta en español y en inglés, este último en móvil, sin desbordamiento horizontal ni errores JavaScript no controlados.
+
+Una ejecución conjunta rápida alcanzó el límite de solicitudes de la demo en una operación administrativa y devolvió HTTP 429. Se verificó esa causa en la traza y se repitieron los grupos con la ventana restablecida, sin reducir el límite. Los resultados finales anteriores corresponden a grupos separados.
+
+Los escenarios utilizan prisma/investor-flow-test.db y una instancia PostgreSQL local dedicada. Las capturas y trazas están en output/qa-investor-validated/, output/qa-investor-regression/ y output/qa-investor-postgres/. No se han usado credenciales ni modificado la base alojada de Neon.
+
+El despliegue existente de Vercel no incorpora estos cambios hasta publicar una versión nueva. Su build aplicará la migración PostgreSQL automáticamente. Todas las operaciones continúan siendo ficticias.

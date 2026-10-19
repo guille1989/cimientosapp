@@ -177,3 +177,20 @@ La aplicación incluye internacionalización `es` y `en` con el selector de idio
 Para añadir una traducción, incorpora el mensaje y su equivalente a ambos catálogos y utiliza `t("Mensaje original")` para textos visibles. No traduzcas valores de formularios, rutas, IDs ni estados internos. Para mensajes con variables utiliza `t("Hola, {value0}.", {value0: nombre})`.
 
 Pruebas: `npm test` comprueba catálogos, interpolaciones, formatos, idioma válido y mensajes heredados. `npx playwright test tests/i18n.spec.ts` comprueba persistencia y metadatos, inversión y cancelación en inglés, documentos, CSV, errores y roles. `node scripts/verify-i18n.mjs` recorre 80 combinaciones de pantalla, idioma y tamaño, comprueba la consola y genera capturas e informe en `output/qa-i18n/`.
+
+
+## Confirmación de inversiones y reintentos
+
+La acción `invest` requiere una `idempotencyKey` UUID por intención de inversión. La clave se vincula al usuario, proyecto e importe. Repetir esa misma solicitud devuelve el compromiso existente y su estado actual; no añade otro movimiento, notificación ni evento de creación. Cambiar el proyecto o importe con una clave ya utilizada devuelve HTTP 409. Una inversión nueva e intencionada utiliza una clave nueva.
+
+La clave y el importe pendientes se conservan en `sessionStorage` por usuario/proyecto. Si se pierde la respuesta, se pueden recuperar desde «Revisar solicitud pendiente», incluso tras recargar o cuando el primer intento haya completado la financiación. El usuario vuelve a revisar y aceptar las advertencias. La interfaz muestra el estado y la fecha de reflexión del compromiso recuperado. Al recibir una confirmación válida, se elimina la referencia pendiente.
+
+La recuperación local dura lo que conserva el navegador el almacenamiento de esa pestaña; no es una sincronización entre dispositivos. Si el almacenamiento está bloqueado, no se envía una confirmación nueva sin poder conservar su referencia. Los errores inciertos mantienen la clave; los rechazos definitivos de validación liberan esa intención. El servidor comprueba siempre la sesión y el rol. Una clave de otro usuario no permite acceder a su compromiso.
+
+La migración `20261019160000_commitment_idempotency` añade una columna opcional y una restricción única por usuario/clave, conservando los compromisos históricos. Existen migraciones independientes para SQLite y PostgreSQL. El build de Vercel la aplica automáticamente al desplegar esta versión; no requiere nuevas variables de entorno.
+
+`tests/investment-reliability.spec.ts` prueba concurrencia, reutilización incompatible, separación entre usuarios y registro → onboarding → confirmación con respuesta perdida → recarga → recuperación → cartera → cancelación, en español y en inglés. El recorrido inglés también se prueba en móvil. Utiliza bases dedicadas: las pruebas crean y eliminan sus propios proyectos y usuarios.
+
+Una ejecución rápida de todos los escenarios puede alcanzar el límite de solicitudes de la demo. Si aparece HTTP 429, respeta su ventana de un minuto o ejecuta los grupos con un servidor de pruebas recién iniciado entre ellos; no reduzcas la protección para pasar las pruebas.
+
+La garantía de no duplicar aquí se refiere al registro transaccional de operaciones ficticias. Un proveedor de pagos real necesitará idempotencia propia, eventos persistentes, conciliación y recuperación de fallos antes de procesar dinero.

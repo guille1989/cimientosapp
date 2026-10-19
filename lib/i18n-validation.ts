@@ -5,6 +5,7 @@ export function validationMessage(error: ZodError, locale: Locale) {
   const details = error.issues.slice(0,3).map(issue=>{
     const field = issue.path.map(p=>t(String(p))).join(" · ");
     let message = t(issue.message);
+    if (issue.path.at(-1) === "idempotencyKey") return t("idempotencyKey") + ": " + t("La referencia de la solicitud no es válida. Actualiza la página y vuelve a intentarlo.");
     if(message===issue.message && issue.code!=="custom") {
       if(issue.code==="too_small") message=translate(locale,issue.origin==="string"?"Introduce al menos {value0} caracteres.":"El valor mínimo es {value0}.",{value0:String(issue.minimum)});
       else if(issue.code==="too_big") message=translate(locale,"El valor máximo es {value0}.",{value0:String(issue.maximum)});
