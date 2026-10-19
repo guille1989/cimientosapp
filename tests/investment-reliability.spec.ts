@@ -1,7 +1,7 @@
 import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
-import { translate, type Locale } from "../lib/i18n";
+import { formatMoney, translate, type Locale } from "../lib/i18n";
 
 const database = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL || "file:./dev.db" } } });
 let projects: string[] = [];
@@ -176,7 +176,9 @@ for(const locale of ["es","en"] as const)test("Inversor nuevo "+locale+": alta �
   expect(await database.investmentCommitment.count({where:{userId:user.id,projectId:project.id}})).toBe(1);
   await page.reload();
   await expect(page.getByRole("button",{name:t("Revisar solicitud pendiente"),exact:true})).toBeVisible();
-  await expect(page.getByLabel(t("Cantidad personalizada (€)"),{exact:true})).toHaveValue("100");
+  await expect(page.getByLabel(t("Cantidad personalizada (€)"),{exact:true})).toHaveCount(0);
+  await expect(page.locator(".investment-pending")).toContainText(t("Importe de la solicitud"));
+  await expect(page.locator(".investment-pending strong")).toHaveText(formatMoney(100,locale));
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   await page.screenshot({path:test.info().outputPath("pending-"+locale+".png"),fullPage:true});
   await page.getByRole("button",{name:t("Revisar solicitud pendiente"),exact:true}).click();

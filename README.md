@@ -194,3 +194,15 @@ La migración `20261019160000_commitment_idempotency` añade una columna opciona
 Una ejecución rápida de todos los escenarios puede alcanzar el límite de solicitudes de la demo. Si aparece HTTP 429, respeta su ventana de un minuto o ejecuta los grupos con un servidor de pruebas recién iniciado entre ellos; no reduzcas la protección para pasar las pruebas.
 
 La garantía de no duplicar aquí se refiere al registro transaccional de operaciones ficticias. Un proveedor de pagos real necesitará idempotencia propia, eventos persistentes, conciliación y recuperación de fallos antes de procesar dinero.
+
+## Ficha de proyecto: inversión y seguimiento
+
+El simulador y el panel de captación se muestran únicamente en préstamos con estado `FUNDING`, plazo de financiación vigente y capital pendiente suficiente para la inversión mínima. La misma comprobación se comparte entre la ficha y el formulario. El servidor sigue validando cada compromiso de forma independiente.
+
+Los demás estados muestran un panel de seguimiento: estado del proyecto, progreso declarado de obra, próximo hito por fecha prevista, última actualización y accesos a las pestañas de calendario y novedades. Los proyectos devueltos o cancelados conservan su historial y no presentan un próximo hito como una operación pendiente. Los retrasos y la recuperación incluyen advertencias específicas.
+
+Los inversores con compromisos en ese proyecto ven además su propia posición, los estados de sus compromisos, capital pendiente de devolución, devoluciones e intereses recibidos. Los compromisos cancelados o reembolsados no se suman al capital activo ni a las devoluciones del préstamo. El tipo objetivo se conserva como condición de la participación, identificado como no garantizado. Los visitantes y otros roles ven únicamente la información del proyecto.
+
+Si existe una solicitud pendiente de comprobar, sigue disponible su recuperación con el importe original, incluso cuando el primer intento haya completado la financiación. En ese caso no se vuelve a mostrar un formulario para iniciar otra inversión. No se añaden variables de entorno, dependencias ni migraciones con este ajuste.
+
+`tests/project-followup.spec.ts` comprueba los estados de la ficha, disponibilidad real del simulador, navegación por teclado, posición propia sin cancelaciones ni datos ajenos, información incompleta y presentación en escritorio, tablet y móvil, con español e inglés. Sus variantes de estado utilizan respuestas controladas de `/api/state`; la recuperación y cancelación se verifican además contra la API y base local dedicadas mediante `tests/investment-reliability.spec.ts`.

@@ -91,3 +91,20 @@ Una ejecución conjunta rápida alcanzó el límite de solicitudes de la demo en
 Los escenarios utilizan prisma/investor-flow-test.db y una instancia PostgreSQL local dedicada. Las capturas y trazas están en output/qa-investor-validated/, output/qa-investor-regression/ y output/qa-investor-postgres/. No se han usado credenciales ni modificado la base alojada de Neon.
 
 El despliegue existente de Vercel no incorpora estos cambios hasta publicar una versión nueva. Su build aplicará la migración PostgreSQL automáticamente. Todas las operaciones continúan siendo ficticias.
+
+## Panel contextual de seguimiento — 19 de octubre de 2026
+
+La ficha oculta la captación y el simulador cuando no se pueden iniciar compromisos nuevos. En su lugar muestra el seguimiento del proyecto y, cuando corresponde, la posición del inversor conectado. Distingue explícitamente el estado del proyecto de los estados de los compromisos; no acumula compromisos cancelados o reembolsados en la participación activa ni datos de otros usuarios.
+
+Comprobaciones de la versión final:
+
+- `npm test`: 17/17 pruebas unitarias.
+- `npm run build`: producción compilada correctamente; comprobación TypeScript incluida.
+- `npx playwright test tests/project-followup.spec.ts tests/investment-reliability.spec.ts tests/public.spec.ts --workers=1 --output output/qa-project-followup/validated-production`: 11/11 con `next start` y la base SQLite de pruebas.
+- Se cubren financiación completada, ejecución, devolución, retraso, recuperación, cancelación y próxima publicación; cierre por plazo, capital agotado o insuficiente y estado publicado sin apertura de inversión.
+- Los accesos a calendario y actualizaciones seleccionan la pestaña y trasladan el foco al contenido. Se verifican teclado, escritorio, tablet de 820 px y móvil de 390 px, sin desbordamiento horizontal.
+- Se verifican importes propios con devoluciones parciales, participaciones ya devueltas, exclusión de cancelaciones/reembolsos y datos ajenos, así como ausencia de hitos o novedades.
+- La prueba completa de inversor nuevo sigue cubriendo registro, onboarding, pérdida de respuesta, recarga con el proyecto ya financiado, recuperación del mismo compromiso, cartera y cancelación, tanto en español como en inglés móvil. Se adaptó su comprobación del importe al aviso de solicitud pendiente, ya que el simulador se elimina intencionadamente en ese estado.
+- Revisión visual de capturas en `output/qa-project-followup/`, con las trazas y capturas de los recorridos completos en `validated-production/`.
+
+Los casos del panel usan datos controlados para cubrir todos los estados sin modificar proyectos de usuarios. Las pruebas transaccionales utilizan `prisma/investor-flow-test.db` y sus propias entidades temporales. No se modifica el esquema ni la base de desarrollo, no se usan servicios externos y no se ha desplegado la nueva versión en Vercel.

@@ -8,6 +8,9 @@ export const ACTIVE_COMMITMENTS: CommitmentStatus[] = ["REFLECTION", "CONFIRMED"
 export const cents = (euros: number) => Math.round(euros * 100);
 export const euros = (value: number) => value / 100;
 export function fundingPercentage(funded: number, target: number): number { return target <= 0 ? 0 : Math.min(100, Math.round((funded / target) * 1000) / 10); }
+export function isProjectOpenForInvestment(project: Pick<Project, "type" | "status" | "target" | "funded" | "minInvestment" | "fundingDeadline">, now = Date.now()): boolean {
+  return project.type === "DEBT" && project.status === "FUNDING" && project.target - project.funded >= Math.max(100, project.minInvestment) && new Date(project.fundingDeadline).getTime() > now;
+}
 export function validateInvestment(amount: number, remaining: number, minimum = 100): void {
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < minimum) throw new DomainError(`La inversión mínima es de ${minimum} € y debe ser una cantidad entera.`);
   if (amount > remaining) throw new DomainError("La cantidad supera el capital pendiente del proyecto.");
